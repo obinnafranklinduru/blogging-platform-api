@@ -1,0 +1,37 @@
+Worksquare Backend Assessment
+
+Project: Build a RESTful API for a Blogging Platform
+Overview: Build a RESTful API for a blogging platform that allows users to create, read,
+update, and delete blog posts. The API should also support user authentication and
+authorization, allowing users to create and manage their own posts.
+
+Requirements:
+Level 1:
+
+- Build a RESTful API using either Node.js or PHP -> DONE
+- Implement CRUD operations for blog posts -> DONE
+- Allow users to authenticate using either JWT or OAuth2.0 -> DONE
+
+Level 2:
+
+- Enforce authorization rules to ensure that users can only create and manage their own
+  posts -> DONE
+- Use a database to store and retrieve blog post data (e.g. MySQL, MongoDB, or
+  PostgreSQL) -> DONE
+- Version the API using a URL or header parameter -> DONE
+- Handle errors and provide appropriate error messages and status codes -> DONE
+
+Level 3:
+
+- Implement security measures to protect against common security threats such as SQL
+  injection, XSS, and CSRF attacks
+- Optimize the API for scalability and performance, able to handle a large number of
+  requests and traffic
+
+Level 4:
+
+- Include appropriate documentation using tools such as Swagger or Postman to
+  provide a clear and concise overview of the API, its endpoints, parameters, and
+  responses.
+
+Due date: 04:00 pm 23rd, May 2023.
