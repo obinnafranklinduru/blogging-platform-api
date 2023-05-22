@@ -1,11 +1,13 @@
-const path = require('path');
 const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-const baseDir = path.resolve();
-const api = require('./routes/api')
+require('dotenv').config()
+
+const PORT = process.env.PORT || 3000;
+const api = require('./src/routes/api')
+const { mongooseConnect } = require('./src/utils/mongoose');
 
 const app = express();
 
@@ -29,8 +31,21 @@ app.use((err, req, res, next) => {
 });
 
 // Routes
-app.use('/public/uploads', express.static(baseDir + '/public/uploads'));
-app.use('/public/uploads', express.static(baseDir + '/public/uploads'));
+app.use('/public/uploads', express.static(__dirname + '/public/uploads'));
 app.use('/api/v1', api);
 
-module.exports = app;
+const startServer = async () => {
+    try {
+        await mongooseConnect();
+
+        qpp.on('error', (error) => {
+            throw new Error(error.message);
+        });
+
+        app.listen(PORT, () => console.log(`Server listening on port https://localhost:${PORT}`));
+    } catch (error) {
+        console.log(`Server failed to start: ${error.message}`)
+    }
+}
+
+startServer();

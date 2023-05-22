@@ -2,14 +2,14 @@
   "name": "blogging-platform-api",
   "version": "1.0.0",
   "description": "This is a RESTful API for a blogging platform that allows users to create, read, update, and delete blog posts. The API supports user authentication and authorization, allowing users to create and manage their own posts.",
-  "main": "src/server.js",
+  "main": "server.js",
   "jest": {
     "testEnvironment": "node",
     "testTimeout": 1000000
   },
   "scripts": {
-    "start": "node src/server.js",
-    "watch": "nodemon src/server.js",
+    "start": "node server.js",
+    "watch": "nodemon server.js",
     "test": "jest --detectOpenHandles",
     "test-watch": "jest --watch"
   },
