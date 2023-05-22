@@ -38,7 +38,7 @@ const startServer = async () => {
     try {
         await mongooseConnect();
 
-        qpp.on('error', (error) => {
+        app.on('error', (error) => {
             throw new Error(error.message);
         });
 
