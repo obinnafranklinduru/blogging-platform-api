@@ -55,7 +55,9 @@ The API is built using the following technologies:
 
    npm run start
 
-5. Testing the API - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/)
+5. Testing the API
+
+   [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/)
 
 6. Error Handling
 
