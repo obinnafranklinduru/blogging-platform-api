@@ -21,10 +21,13 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'RESTful API documentation for a blogging platform that allows users to create, read, update, and delete blog posts. The API supports user authentication and authorization, allowing users to create and manage their own posts.',
     },
-    servers: [
+    servers: [ 
+      {
+        url: 'https://fair-gray-dungarees.cyclic.app/', // Second URL
+      },
       {
         url: 'http://localhost:3000',
-      },
+      }
     ],
     components: {
       securitySchemes: {
