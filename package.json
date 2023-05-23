@@ -8,10 +8,11 @@
     "testTimeout": 1000000
   },
   "scripts": {
-    "start": "pm2 node server.js -i max",
+    "start": "node server.js",
     "watch": "nodemon server.js",
     "test": "jest --detectOpenHandles",
-    "test-watch": "jest --watch"
+    "test-watch": "jest --watch",
+    "deploy": "pm2 start server.js -i max"
   },
   "repository": {
     "type": "git",
