@@ -57,7 +57,7 @@ The API is built using the following technologies:
 
 5. Testing the API
 
-   [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/)
+   [![Run in Postman](https://run.pstmn.io/button.svg)](https://documenter.getpostman.com/view/26953456/2s93m4Xhb6)
 
 6. Error Handling
 
