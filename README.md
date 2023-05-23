@@ -40,8 +40,8 @@ The API is built using the following technologies:
 
 2. Install the dependencies:
 
-cd blogging-platform-api
-npm install
+   cd blogging-platform-api
+   npm install
 
 3. Configure the environment variables:
 
@@ -53,11 +53,9 @@ npm install
 
 4. Start the server:
 
-npm run start
+   npm run start
 
-5. Testing the API
-
-[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/).
+5. Testing the API - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/)
 
 6. Error Handling
 
@@ -73,7 +71,7 @@ npm run start
 
 9. Contributing
 
-Contributions to the project are welcome! If you find any issues or would like to suggest improvements, please open an issue or submit a pull request.
+   Contributions to the project are welcome! If you find any issues or would like to suggest improvements, please open an issue or submit a pull request.
 
 10. License
 
