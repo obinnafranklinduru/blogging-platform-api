@@ -8,7 +8,7 @@
     "testTimeout": 1000000
   },
   "scripts": {
-    "start": "pm2 start server.js -i max",
+    "start": "start server.js",
     "watch": "nodemon server.js",
     "test": "jest --detectOpenHandles",
     "test-watch": "jest --watch"
