@@ -1,6 +1,6 @@
 const request = require('supertest');
 
-const app = require('../../app');
+const app = require('../../../app');
 const User = require('../../models/users.model');
 const TokenBlacklist = require('../../models/tokenblacklist.model');
 const { mongooseConnect, mongooseDisconnect } = require('../../utils/mongoose');

@@ -39,11 +39,9 @@ async function authToken(req, res, next) {
     } catch (error) {
         const errors = handleError(error);
 
-        // Handle validation errors or other errors
-        if (errors) return res.status(400).json({ errors });
-
-        // Handle internal server errors
-        res.status(500).json({ error: 'Internal Server Error' });
+        // Set the response headers and handle validation errors or other errors
+        res.header('Content-Type', 'application/json');
+        res.status(400).json({ errors });
     }
 }
 
@@ -63,18 +61,17 @@ function authAdmin(req, res, next) {
                 // Call the next function
                 next();
             } else {
-                // Handle unauthorized access
+                // Set the response headers and handle unauthorized access
+                res.header('Content-Type', 'application/json');
                 res.status(403).json({ message: 'Unauthorized' });
             }
         })
     } catch (error) {
         const errors = handleError(error);
 
-        // Handle validation errors or other errors
-        if (errors) return res.status(400).json({ errors });
-
-        // Handle internal server errors
-        res.status(500).json({ error: 'Internal Server Error' });
+        // Set the response headers and handle validation errors or other errors
+        res.header('Content-Type', 'application/json');
+        res.status(400).json({ errors });
     }
 }
 

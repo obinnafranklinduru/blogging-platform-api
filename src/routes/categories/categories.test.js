@@ -1,6 +1,6 @@
 const request = require('supertest');
 
-const app = require('../../app');
+const app = require('../../../app');
 const Category = require('../../models/categories.model');
 const User = require('../../models/users.model');
 const { mongooseConnect, mongooseDisconnect } = require('../../utils/mongoose');

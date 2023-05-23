@@ -22,14 +22,21 @@ The API is built using the following technologies:
 - JWT: JSON Web Tokens for user authentication and authorization.
 - Bcrypt: A library for hashing and comparing passwords securely.
 - Helmet: A middleware provides protection by setting appropriate headers.
-- Cors: A mechanism that enables Cross-Origin Resource Sharing
+- Cors: A mechanism that enables Cross-Origin Resource Sharing.
+- DotENV: Environments variables.
+- Morgan: Logs information about incoming requests and outgoing responses.
+- Multer: Handle Files uploads.
+- PM2: Optimize the API for scalability and performance.
+- Swagger/ Swagger-UI: For API Documentation.
+- Validator: Validate user input for email.
 
 ## Setup
 
 1. Clone the repository:
-   git clone: https://github.com/obinnafranklinduru/nodejs-projects/tree/main/blogging-platform-api
 
----
+```
+  git clone: https://github.com/obinnafranklinduru/nodejs-projects/tree/main/blogging-platform-api
+```
 
 2. Install the dependencies:
 
@@ -50,70 +57,7 @@ npm run start
 
 5. Testing the API
 
-You can test the API using a tool like [Postman](https://www.postman.com/) or cURL. The API endpoints are as follows:
-
-- User Registration:
-
-  - URL: `POST /api/v1/auth/register`
-  - Request Body:
-
-  ```
-  {
-     "username": "your-username",
-     "password": "your-password",
-     "email": "your-email"
-  }
-  ```
-
-- User Login:
-
-  - URL: `POST /api/v1/login`
-  - Request Body:
-
-  ```
-  {
-      "email": "your-email",
-      "password": "your-password"
-  }
-  ```
-
-  ```
-  {
-      "username": "your-username",
-      "password": "your-password"
-  }
-  ```
-
-  - Response Body: `{ "token": "your-jwt-token" }`
-
-- User Logout:
-
-  - URL: `POST /api/v1/logout`
-  - Response Body: `{ "message": "Logout successful" }`
-
-  - Create Blog Post:
-
-    - URL: `POST /api/v1/posts`
-    - Request Body: `{ "title": "Your Post Title", "content": "Your Post Content" }`
-    - Headers: `{ "Authorization": "Bearer your-jwt-token" }`
-
-  - Read All Blog Posts:
-
-    - URL: `GET /api/v1/posts`
-
-  - Read a Specific Blog Post:
-
-    - URL: `GET /api/v1/posts/:id` (replace `:id` with the ID of the post)
-
-  - Update Blog Post:
-
-    - URL: `PUT /api/v1/posts/:id` (replace `:id` with the ID of the post)
-    - Request Body: `{ "title": "Updated Post Title", "content": "Updated Post Content" }`
-    - Headers: `{ "Authorization": "Bearer your-jwt-token" }`
-
-  - Delete Blog Post:
-    - URL: `DELETE /api/v1/posts/:id` (replace `:id` with the ID of the post)
-    - Headers: `{ "Authorization": "Bearer your-jwt-token" }`
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/).
 
 6. Error Handling
 
@@ -125,12 +69,12 @@ You can test the API using a tool like [Postman](https://www.postman.com/) or cU
 
 8. Deployment
 
-   To deploy the API to a production environment, you can use platforms like Heroku, AWS, or Azure. Make sure to configure the necessary environment variables and adjust any security settings as needed.
+   To deploy the API to a production environment, you can use platforms like Cyclic, Heroku, AWS, or Azure. Make sure to configure the necessary environment variables and adjust any security settings as needed.
 
 9. Contributing
 
-   Contributions to the project are welcome! If you find any issues or would like to suggest improvements, please open an issue or submit a pull request.
+Contributions to the project are welcome! If you find any issues or would like to suggest improvements, please open an issue or submit a pull request.
 
 10. License
 
-    This project is licensed under the [MIT License](LICENSE)
+    This project is licensed under the [MIT License](https://opensource.org/license/mit/)

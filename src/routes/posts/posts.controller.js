@@ -91,7 +91,7 @@ async function httpGetPostByCategory(req, res) {
         }
 
         // Find posts matching the specified category and populate related fields
-        const filteredPosts = await Post.find({ category: formattedCategory })
+        const posts = await Post.find({ category: formattedCategory })
             .select('title content author category image likes comments')
             .populate({ path: 'author', select: 'username -_id' })
             .populate({ path: 'likes', select: 'username -_id' })
@@ -103,7 +103,7 @@ async function httpGetPostByCategory(req, res) {
 
         // Set the response headers and send the filtered posts
         res.header('Content-Type', 'application/json');
-        res.status(200).json({ filteredPosts });
+        res.status(200).json({ posts });
     } catch (error) {
         const errors = handleError(error);
 
