@@ -1,14 +1,13 @@
-const usersRouter = require('express').Router();
+const express = require('express');
+const userRouter = express.Router();
 
-const { authToken } = require('../../middleware/auth');
-const { uploads } = require('../../utils/multer');
+const { authToken } = require('../../middlewares/auth');
 const {
     httpGetUsers,
     httpGetUserByID,
-    httpGetUsersCount,
     httpUpdateUser,
     httpDeleteUser
-} = require('./users.controller')
+} = require('./users.controller');
 
 /**
  * @swagger
@@ -32,17 +31,6 @@ const {
  *           type: string
  *           format: password
  *           description: Password of the user
- *         firstname:
- *           type: string
- *           description: First name of the user
- *         surname:
- *           type: string
- *           description: Surname of the user
- *         profilePicture:
- *           type: string
- *           format: binary
- *           pattern: ".*\\.(jpg|jpeg|png)$"
- *           description: Profile picture
  * 
  *     UserMultipleResponse:
  *       type: object
@@ -59,19 +47,12 @@ const {
  *         user:
  *           type: object
  *           description: User object
- * 
- *     UserCountResponse:
- *       type: object
- *       properties:
- *         usersCount:
- *           type: number
- *           description: Users count
  *              
  */ 
 
 /**
  * @swagger
- * /users:
+ * /api/v1/users:
  *   get:
  *     tags: [Users]
  *     summary: Retrieve all users
@@ -82,8 +63,21 @@ const {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UserMultipleResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-usersRouter.get('/', httpGetUsers);
+userRouter.get('/', httpGetUsers);
+
 
 /**
  * @swagger
@@ -105,24 +99,21 @@ usersRouter.get('/', httpGetUsers);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UserSingleResponse'
- */
-usersRouter.get('/:id', authToken, httpGetUserByID);
-
-/**
- * @swagger
- * /api/v1/users/get/count:
- *   get:
- *     tags: [Users]
- *     summary: Get the count of users
- *     responses:
- *       200:
- *         description: The count of users
+ *       400:
+ *         description: Bad request
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/UserCountResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-usersRouter.get('/get/count', authToken, httpGetUsersCount);
+userRouter.get('/:id', authToken, httpGetUserByID);
+
 
 /**
  * @swagger
@@ -132,7 +123,7 @@ usersRouter.get('/get/count', authToken, httpGetUsersCount);
  *     summary: Update a user
  *     requestBody:
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateUserRequest'
  *     responses:
@@ -141,9 +132,22 @@ usersRouter.get('/get/count', authToken, httpGetUsersCount);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-usersRouter.put('/', authToken, uploads.single('profilePicture'), httpUpdateUser);
+userRouter.put('/', authToken, httpUpdateUser);
+
 
 /**
  * @swagger
@@ -157,8 +161,20 @@ usersRouter.put('/', authToken, uploads.single('profilePicture'), httpUpdateUser
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-usersRouter.delete('/', authToken, httpDeleteUser);
+userRouter.delete('/', authToken, httpDeleteUser);
 
-module.exports = usersRouter;
+module.exports = userRouter;

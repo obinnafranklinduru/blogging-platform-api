@@ -1,6 +1,6 @@
 const categoriesRouter = require('express').Router();
 
-const { authAdmin, authToken } = require('../../middleware/auth');
+const { authAdmin, authToken } = require('../../middlewares/auth');
 const {
     httpGetCategories,
     httpGetCategoryByID,
@@ -25,13 +25,6 @@ const {
  *           description: name of the category
  *       required:
  *         - name
- *
- *     SuccessResponse:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           description: Success message
  * 
  *     CategoryMultipleResponse:
  *       type: object
@@ -66,6 +59,18 @@ const {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/CategoryMultipleResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 categoriesRouter.get('/', authToken, httpGetCategories);
 
@@ -91,6 +96,18 @@ categoriesRouter.get('/', authToken, httpGetCategories);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/CategorySingleResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 categoriesRouter.get('/:id', authAdmin, httpGetCategoryByID);
 
@@ -114,7 +131,19 @@ categoriesRouter.get('/:id', authAdmin, httpGetCategoryByID);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 categoriesRouter.post('/', authAdmin, httpCreateCategory);
 
@@ -145,7 +174,19 @@ categoriesRouter.post('/', authAdmin, httpCreateCategory);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 categoriesRouter.put('/:id', authAdmin, httpUpdateCategory);
 
@@ -170,7 +211,19 @@ categoriesRouter.put('/:id', authAdmin, httpUpdateCategory);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 categoriesRouter.delete('/:id', authAdmin, httpDeleteCategory);
 

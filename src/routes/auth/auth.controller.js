@@ -1,95 +1,86 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
 require('dotenv').config()
 
 const User = require('../../models/users.model');
 const TokenBlacklist = require('../../models/tokenblacklist.model');
-const handleError = require('../../utils/errors.handler')
+const ErrorResponse  = require('../../utils/error.response')
 
 /**
- * Register a new user.
+ * @desc Register a new user.
+ * @route POST /api/v1/auth/register
+ * @access Public
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the registered user's ID or an error message.
  */
-async function httpRegisterUser(req, res) {
+async function httpRegisterUser(req, res, next) {
     try {
         const { username, email, password } = req.body;
 
         // Check if required fields are provided
-        if (!username || !email || !password) return res.status(400)
-            .json({ message: 'Please provide username, email and password' });
+        if (!username || !email || !password)
+            return next(new ErrorResponse('Please provide username, email and password', 400));
 
         // Create a new user with the provided details
         const user = await User.create({ username, email, password });
-        
-        // Handle user creation failure
-        if (!user) return res.status(501).json({ registration: 'Not Implemented' });
 
-        // Set the response headers and return success message with the registered user's ID
-        res.header('Content-Type', 'application/json');
-        res.status(201).json({ message: `user registered with ID: ${user._id}` });
+        res.status(201).json({ message: `User registered with ID: ${user._id}` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Register a new admin.
+ * @desc Register a new admin.
+ * @route POST /api/v1/auth/register
+ * @access Public
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the registered admin's ID or an error message.
+ * @param {Function} next - The error passed to the error handler function.
+ * @returns {Object} - The response containing the registered user's ID or an error message.
  */
-async function httpRegisterAdmin(req, res) {
+async function httpRegisterAdmin(req, res, next) {
     try {
         const { username, email, password, isAdmin } = req.body;
 
         // Check if required fields are provided
-        if (!username || !email || !password) return res.status(400)
-            .json({ message: 'Please provide username, email, admin status and password' });
-        
+        if (!username || !email || !password)
+            return next(new ErrorResponse('Please provide username, email and password', 400));
+
         // Check if required admin status is set to true
-        if (!isAdmin) return res.status(400)
-            .json({ message: 'Please set admin status to true' });
+        if (!isAdmin) return next(new ErrorResponse('Please set admin status to true', 400));
 
-        // Create a new admin with the provided details
-        const user = await User.create({ username, email, password, isAdmin });
-        
-        // Handle admin creation failure
-        if (!user) return res.status(501).json({ registration: 'Not Implemented' });
+        // Create a new user with the provided details
+        const admin = await User.create({ username, email, password, isAdmin });
 
-        // Set the response headers and return success message with the registered admin's ID
-        res.header('Content-Type', 'application/json');
-        res.status(201).json({ message: `admin registered with ID: ${user._id}` });
+        res.status(201).json({ message: `Adim registered with ID: ${admin._id}` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Login a user.
- *
+ * @desc Login a user.
+ * @route POST /api/v1/auth/login
+ * @access Public
+ * 
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the access token or an error message.
  */
-async function httpLoginUser(req, res) {
+async function httpLoginUser(req, res, next) {
     try {
         const { username, email, password } = req.body;
 
         // Validate that username or email and password are provided
-        if ((!username && !email) || !password) return res.status(400)
-            .json({ message: 'Please provide username/email and password' });
+        if ((!username && !email) || !password)
+            return next(new ErrorResponse('Please provide username or email and password', 400));
 
         let user;
 
@@ -106,67 +97,49 @@ async function httpLoginUser(req, res) {
         }
 
         // Handle incorrect credentials for username or email
-        if (!user) return res.status(401).json({ message: 'Incorrect credentials' });
+        if (!user) return next(new ErrorResponse('Incorrect credentials', 401));
 
         // Compare password with hashed password
         const auth = await bcrypt.compare(password, user.password);
 
         // Handle incorrect credentials for password
-        if (!auth) return res.status(401).json({ message: 'Incorrect credentials' });
+        if (!auth) return next(new ErrorResponse('Incorrect credentials', 401));
 
         // Generate and sign the access token
         const accessToken = jwt.sign(
-            { _id: user._id, isAdmin: user.isAdmin },
-            process.env.JWT_SECRET_ACCESS_TOKEN,
+            { id: user._id, isAdmin: user.isAdmin },
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
-        // Handle login failure
-        if (!accessToken) return res.status(501).json({ message: 'Login failed' });
-
-        // Set the response headers and return the access token
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ accessToken });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Logout a user.
+ * @desc Logout a user.
+ * @route GET /api/auth/logout
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response indicating the logout status.
  */
-async function httpLogoutUser(req, res) {
+async function httpLogoutUser(req, res, next) {
     try {
-        const authHeader = req.header('Authorization');
+        const authHeader = req.header('Authorization') || req.header('authorization');
 
-        // Check if Authorization header exists
-        if (!authHeader) return res.status(401).json({ message: 'Unauthorized' });
-
-        const token = authHeader.split(' ')[1];
+        const token = authHeader && authHeader.split(' ')[1];
 
         // Add the token to the blacklist
-        const blacklist = await TokenBlacklist.create({ token });
+        await TokenBlacklist.create({ token });
 
-        // Handle token blacklist failure
-        if (!blacklist) return res.status(501).json({ message: 'Logout not implemented' })
-
-        // Set the response headers and send the response with a successful logout message
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ message: 'Logout successful' });
     } catch (error) {
-        const errors = handleError(error);
-        
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 

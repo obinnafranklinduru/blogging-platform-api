@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const CategorySchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, 'name is required'],
-        unique: [true, 'category already exists'],
+        required: [true, 'Please add a category name'],
+        unique: [true, 'Category already exists'],
         lowercase: true,
         trim: true,
         set: value => {

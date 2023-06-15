@@ -3,21 +3,11 @@ const { isEmail } = require('validator');
 const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
-  firstname: {
-    type: String,
-    default: '',
-    maxlength: [32, 'firstname field must not exceed 32 characters'],
-  },
-  surname: {
-    type: String,
-    default: '',
-    maxlength: [32, 'surname field must not exceed 32 characters'],
-  },
   username: {
     type: String,
-    required: [true, 'username is required'],
-    maxlength: [20, 'username field must not exceed 20 characters'],
-    unique: [true, 'username already exists'],
+    required: [true, 'Please add a username'],
+    maxlength: [20, 'Please username must not exceed 20 characters'],
+    unique: [true, 'Username already exists'],
     lowercase: true,
     trim: true,
     set: value => {
@@ -27,21 +17,17 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, 'email address is required'],
-    unique: [true, 'email address already exists'],
+    required: [true, 'Please add an email address'],
+    unique: [true, 'Email address already exists'],
     lowercase: true,
     trim: true,
-    validate: [isEmail, 'invalid email address'],
+    validate: [isEmail, 'Invalid email address'],
   },
   password: {
     type: String,
-    required: [true, 'password is required'],
+    required: [true, 'Please add a secure password'],
     trim: true,
-    minlength: [6, 'enter at least 6 characters'],
-  },
-  profilePicture: {
-    type: String,
-    default: '',
+    minlength: [6, 'Enter at least 6 characters'],
   },
   isAdmin: { type: Boolean, default: false }
 }, { timestamps: true });
@@ -59,6 +45,4 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-const User = mongoose.model('User', userSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

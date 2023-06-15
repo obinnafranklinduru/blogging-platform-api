@@ -1,8 +1,8 @@
 const request = require('supertest');
 
-const app = require('../../../app');
+const app = require('../../app');
 const User = require('../../models/users.model');
-const { mongooseConnect, mongooseDisconnect } = require('../../utils/mongoose');
+const { mongooseConnect, mongooseDisconnect } = require('../../config/mongoose');
 
 describe('User Routes Endpoints', () => {
     let authToken;
@@ -13,51 +13,51 @@ describe('User Routes Endpoints', () => {
 
         user = await User.create({
             username: 'testadmin',
-            email: 'testadmin@example.com',
-            password: 'password',
-            isAdmin: true
+            email: 'testuser@example.com',
+            password: 'password'
         });
 
         const login = await request(app)
-            .post('/api/v1/auth/login')
-            .send({ email: 'testadmin@example.com', password: 'password' });
+            .post('/v1/auth/login')
+            .send({ email: 'testuser@example.com', password: 'password' });
             
         authToken = login.body.accessToken;
     });
 
     afterAll(async () => {
         await User.deleteMany({});
-        await mongooseDisconnect()
+
+        await mongooseDisconnect();
     });
 
-    describe('GET /api/v1/users', () => {
+    describe('GET /v1/users', () => {
         it('should return an object of users', async () => {
-            const response = await request(app).get('/api/v1/users');
+            const response = await request(app).get('/v1/users');
             expect(response.status).toBe(200);
             expect(typeof response.body.users).toBe('object');
         });
     });
 
-    describe('GET /api/v1/users/:id', () => {
+    describe('GET /v1/users/:id', () => {
         it('should require authentication', async () => {
-            const response = await request(app).get('/api/v1/users/1');
+            const response = await request(app).get('/v1/users/1');
 
             expect(response.status).toBe(401);
-            expect(response.body.message).toBe('Unauthorized');
+            expect(response.body.success).toBe(false);
         });
 
         it('should require valid Id', async () => {
             const response = await request(app)
-                .get('/api/v1/users/1')
+                .get('/v1/users/1')
                 .set('Authorization', `Bearer ${authToken}`);
             
             expect(response.status).toBe(400);
-            expect(response.body.message).toBe('Invalid ID');
+            expect(response.body.success).toBe(false);
         });
 
         it('should return a user by ID when authenticated', async () => {
             const response = await request(app)
-                .get(`/api/v1/users/${user._id}`)
+                .get(`/v1/users/${user._id}`)
                 .set('Authorization', `Bearer ${authToken}`)
             
             expect(response.status).toBe(200);
@@ -65,37 +65,18 @@ describe('User Routes Endpoints', () => {
         });
     });
 
-    describe('GET /api/v1/users/get/count', () => {
+    describe('PUT /v1/users', () => {
         it('should require authentication', async () => {
-            const response = await request(app).get('/api/v1/users/get/count');
+            const response = await request(app).put('/v1/users');
             expect(response.status).toBe(401);
-            expect(response.body.message).toBe('Unauthorized');
-        });
-
-        it('should return the total number of users', async () => {
-            const response = await request(app)
-                .get('/api/v1/users/get/count')
-                .set('Authorization', `Bearer ${authToken}`)
-            
-            expect(response.status).toBe(200);
-            expect(typeof response.body.usersCount).toBe('number');
-        });
-    });
-
-    describe('PUT /api/v1/users', () => {
-        it('should require authentication', async () => {
-            const response = await request(app).put('/api/v1/users');
-            expect(response.status).toBe(401);
-            expect(response.body.message).toBe('Unauthorized');
+            expect(response.body.success).toBe(false);
         });
 
         it('should update a user', async () => {
-            const updateUser = { firstname: 'John', surname: 'Doe' };
-
             const response = await request(app)
-                .put('/api/v1/users')
+                .put('/v1/users')
                 .set('Authorization', `Bearer ${authToken}`)
-                .send(updateUser);
+                .send({ username: 'testuser' });
 
             expect(response.status).toBe(200);
             expect(response.body.message).toBeDefined();
@@ -103,16 +84,16 @@ describe('User Routes Endpoints', () => {
         });
     })
 
-    describe('DELETE /api/v1/users', () => {
+    describe('DELETE /v1/users', () => {
         it('should require authentication', async () => {
-            const response = await request(app).delete('/api/v1/users');
+            const response = await request(app).delete('/v1/users');
             expect(response.status).toBe(401);
-            expect(response.body.message).toBe('Unauthorized');
+            expect(response.body.success).toBe(false);
         });
 
         it('should delete a user', async () => {
             const response = await request(app)
-                .delete('/api/v1/users')
+                .delete('/v1/users')
                 .set('Authorization', `Bearer ${authToken}`);
             
             expect(response.status).toBe(200);

@@ -1,7 +1,6 @@
 const postsRouter = require('express').Router();
 
-const { authToken } = require('../../middleware/auth');
-const { uploads } = require('../../utils/multer');
+const { authToken } = require('../../middlewares/auth');
 const {
     httpGetPosts,
     httpGetPostByID,
@@ -22,7 +21,7 @@ const {
  *  
  * components:
  *   schemas:
- *     CreatePostRequest:
+ *     PostRequest:
  *       type: object
  *       properties:
  *         title:
@@ -34,29 +33,6 @@ const {
  *         category:
  *           type: string
  *           description: Category name for the post
- *         image:
- *           type: string
- *           format: binary
- *           pattern: ".*\\.(jpg|jpeg|png)$"
- *           description: Image of the post
- * 
- *     UpdatePostRequest:
- *       type: object
- *       properties:
- *         title:
- *           type: string
- *           description: Title of the post
- *         content:
- *           type: string
- *           description: Content of the post
- *         category:
- *           type: string
- *           description: Category name for the post
- *         image:
- *           type: string
- *           format: binary
- *           pattern: ".*\\.(jpg|jpeg|png)$"
- *           description: Image of the post
  * 
  *     UpdateLikeReponse:
  *       type: object
@@ -111,6 +87,18 @@ const {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PostMultipleResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 postsRouter.get('/', httpGetPosts);
 
@@ -135,12 +123,24 @@ postsRouter.get('/', httpGetPosts);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PostSingleResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 postsRouter.get('/:id', authToken, httpGetPostByID);
 
 /**
  * @swagger
- * /api/v1/posts/get/categories:
+ * /api/v1/posts/get/categories?category:
  *   get:
  *     tags: [Posts]
  *     summary: Get posts by category
@@ -152,6 +152,18 @@ postsRouter.get('/:id', authToken, httpGetPostByID);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PostMultipleResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 postsRouter.get('/get/categories', httpGetPostByCategory);
 
@@ -171,6 +183,18 @@ postsRouter.get('/get/categories', httpGetPostByCategory);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/GetCountResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 postsRouter.get('/get/count', authToken, httpGetPostsCount);
 
@@ -186,9 +210,9 @@ postsRouter.get('/get/count', authToken, httpGetPostsCount);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/CreatePostRequest'
+ *             $ref: '#/components/schemas/PostRequest'
  *     responses:
  *       201:
  *         description: Post created successfully
@@ -196,8 +220,20 @@ postsRouter.get('/get/count', authToken, httpGetPostsCount);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-postsRouter.post('/', authToken, uploads.single('image'), httpCreatePost);
+postsRouter.post('/', authToken, httpCreatePost);
 
 /**
  * @swagger
@@ -218,9 +254,9 @@ postsRouter.post('/', authToken, uploads.single('image'), httpCreatePost);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UpdatePostRequest'
+ *             $ref: '#/components/schemas/PostRequest'
  *     responses:
  *       200:
  *         description: Post updated successfully
@@ -228,8 +264,20 @@ postsRouter.post('/', authToken, uploads.single('image'), httpCreatePost);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-postsRouter.put('/:id', authToken, uploads.single('image'), httpUpdatePost);
+postsRouter.put('/:id', authToken, httpUpdatePost);
 
 /**
  * @swagger
@@ -254,6 +302,18 @@ postsRouter.put('/:id', authToken, uploads.single('image'), httpUpdatePost);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UpdateLikeReponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse' 
  */
 postsRouter.put('/toggle/likes/:id', authToken, httpToggleLike);
 
@@ -278,6 +338,18 @@ postsRouter.put('/toggle/likes/:id', authToken, httpToggleLike);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/GetLikeResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 postsRouter.get('/get/likes/:id', httpGetTotalLikes);
 
@@ -304,6 +376,18 @@ postsRouter.get('/get/likes/:id', httpGetTotalLikes);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 postsRouter.delete('/:id', authToken, httpDeletePost);
 

@@ -2,229 +2,143 @@ const mongoose = require('mongoose');
 const { isEmail } = require('validator');
 
 const User = require('../../models/users.model');
-const handleError = require('../../utils/errors.handler');
+const ErrorResponse  = require('../../utils/error.response')
 
 /**
- * Get all users.
+ * @desc Get all users.
+ * @route GET /api/v1/users
+ * @access Public
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the users or an error message.
+ * @param {Function} next - The error passed to the error handler function.
+ * @returns {Object} - The response containing an array of users or an error message.
  */
-async function httpGetUsers(req, res) {
+async function httpGetUsers(req, res, next) {
     try {
         // Retrieve all users and exclude certain fields
         const users = await User.find({})
             .sort('-createdAt')
-            .select('-__v -password -firstname -surname -updatedAt');
+            .select('-__v -password');
 
         // Handle if no users are found
-        if (users.length === 0) return res.status(404).json({ message: 'No users'});
+        if (users.length === 0) return next(new ErrorResponse('No user found', 404));
 
-        // Set the response headers and send the users
-        res.header('Content-type', 'application/json');
         res.status(200).json({ users });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Get a user by ID.
+ * @desc Get a user by ID
+ * @route GET /api/v1/users/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the user or an error message.
  */
-async function httpGetUserByID(req, res) {
+async function httpGetUserByID(req, res, next) {
     try {
         // Validate the provided ID
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invalid ID' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
         // Find the user by ID and exclude certain fields
         const user = await User.findById(req.params.id)
             .select('-_id -__v -password');
 
         // Handle if user is not found
-        if (!user) return res.status(404)
-            .json({ message: `user with ID ${req.params.id} not found` });
+        if (!user) return next(new ErrorResponse('User not found', 404));
 
-        // Set the response headers and send the user
-        res.header('Content-type', 'application/json');
         res.status(200).json({ user });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Get the count of users.
+ * @desc Update a user.
+ * @route PUT /api/v1/users
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the count of users or an error message.
- */
-async function httpGetUsersCount(req, res) {
-    try {
-        // Count the number of users
-        const usersCount = await User.countDocuments();
-
-        // Handle if no users are found
-        if (usersCount === 0) return res.status(404).json({ message: 'No users found' });
-
-        // Set the response headers and send the users count
-        res.header('Content-type', 'application/json');
-        res.status(200).json({ usersCount });
-    } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
-    }
-}
-
-/**
- * Update a user.
- *
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the updated user or an error message.
  */
-async function httpUpdateUser(req, res) {
+async function httpUpdateUser(req, res, next) {
     try {
-        const { _id } = req.user;
-        const { firstname, surname, username, email, password } = req.body;
-
-        // Find the user by ID
-        const user = await User.findById(_id);
-
-        // Handle if user is not found
-        if (!user) return res.status(404).json({ message: 'user not found' });
-
-        
-        let profilePicturePath = '';
-
-        // Check if a file was uploaded and generate the profilePicturePath
-        if (req.file) {
-            const { filename } = req.file;
-            profilePicturePath = `${req.protocol}://${req.get('host')}/public/uploads/${filename}`;
-        }
-
-        // Check if firstname or surname exceeds the maximum length
-        if (firstname && firstname.length > 32 || surname && surname.length > 32) {
-            return res.status(400)
-                .json({ message: 'firstname and surname fields must not exceed 32 characters' });
-        }
+        const { username, email, password } = req.body;
 
         // Check if username exceeds the maximum length
-        if (username && username.length > 20) {
-            return res.status(400)
-                .json({ message: 'username field must not exceed 20 characters' });
-        }
+        if (username && username.length > 20)
+            return next(new ErrorResponse('Please username must not exceed 20 characters', 400));
 
         // Format the username by removing whitespace and converting to lowercase
-        const formattedUserName = username ? username.trim().replace(/\s/g, '').toLowerCase() : undefined;
+        const formattedUsername = username ? username.trim().replace(/\s/g, '').toLowerCase() : undefined;
 
         // Check if the formatted username already exists for another user
-        if (formattedUserName && formattedUserName === user.username && (await User.findOne({ username: formattedUserName }))) {
-            return res.status(400).json({ message: 'username already exists, choose a different username' });
-        }
+        if (formattedUsername && formattedUsername === (await User.findOne({ username: formattedUsername })))
+            return next(new ErrorResponse('Please username is not unique', 400));
 
         // Check if the email is invalid
-        if (email && !isEmail(email)) {
-            return res.status(400).json({ message: 'Invalid email address' });
-        }
+        if (email && !isEmail(email)) return next(new ErrorResponse('Invalid email address', 400));
 
         // Check if the email already exists for another use
-        if (email && email === user.email && (await User.findOne({ email }))) {
-            return res.status(400).json({ message: 'email already exists, choose a different email' });
-        }
+        if (email && email === (await User.findOne({ email })))
+            return next(new ErrorResponse('Please email address is not unique', 400));
 
         // Format the password by removing whitespace
         const formattedPassword = password ? password.trim() : undefined;
 
         // Check if the password length is less than 6 characters
-        if (formattedPassword && formattedPassword.length < 6) {
-            return res.status(400).json({ message: 'enter at least 6 characters for the password' });
-        }
+        if (formattedPassword && formattedPassword.length < 6)
+            return next(new ErrorResponse('Please enter at least 6 characters', 400));
 
         // Update the user with the provided data
-        const updateUser = await User.findByIdAndUpdate(
-            _id,
+        await User.findByIdAndUpdate(
+            req.user.id,
             {
-                firstname,
-                surname,
-                username: formattedUserName,
+                username: formattedUsername,
                 email,
-                password: formattedPassword,
-                profilePicture: profilePicturePath,
+                password: formattedPassword
             },
             { new: true }
         );
 
-        // Handle if user is not modified
-        if (!updateUser) return res.status(304).json({ message: 'user is not modified' });
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ message: `user with ID ${_id} was modified` });
+        res.status(200).json({ message: `User with ID ${req.user.id} was modified` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error)
     }
 }
 
 /**
- * Delete a user.
+ * @desc Delete a user.
+ * @route DELETE /api/v1/users
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing a success message or an error message.
  */
-async function httpDeleteUser(req, res) {
+async function httpDeleteUser(req, res, next) {
     try {
-        const { _id } = req.user;
-
-        // Find the user by ID
-        const user = await User.findById(_id);
-        if (!user) return res.status(404).json({ message: 'user not found' });
-
         // Delete the user
-        const deletedUser = await User.deleteOne({ _id });
+        await User.deleteOne({ _id: req.user.id });
 
-        // Handle if no user was deleted
-        if (deletedUser.deletedCount === 0) return res.status(417)
-            .json({ message: 'Expectation Failed' });
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ message: `user with ID ${_id} was deleted` });
+        res.status(200).json({ message: `User with ID ${req.user.id} was deleted` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 module.exports = {
     httpGetUsers,
     httpGetUserByID,
-    httpGetUsersCount,
     httpUpdateUser,
     httpDeleteUser
 }

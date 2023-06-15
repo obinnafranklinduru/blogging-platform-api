@@ -1,11 +1,11 @@
 const authRouter = require('express').Router();
 
-const { authToken } = require('../../middleware/auth');
+const { authToken } = require('../../middlewares/auth');
 const {
     httpRegisterUser,
     httpRegisterAdmin,
     httpLoginUser,
-    httpLogoutUser
+    httpLogoutUser,
 } = require('./auth.controller');
 
 /**
@@ -35,37 +35,30 @@ const {
  *         - email
  *         - password
  *
- *     RegisterUserResponse:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           description: Success message
- *
  *     RegisterAdminRequest:
  *       type: object
  *       properties:
  *         username:
  *           type: string
- *           description: Username of the admin
+ *           description: Username of the user
  *         email:
  *           type: string
  *           format: email
- *           description: Email address of the admin
+ *           description: Email address of the user
  *         password:
  *           type: string
  *           format: password
- *           description: Password of the admin
+ *           description: Password of the user
  *         isAdmin:
  *           type: boolean
- *           description: Admin status (true/false)
+ *           description: Status of the user
  *       required:
  *         - username
  *         - email
  *         - password
  *         - isAdmin
- *
- *     RegisterAdminResponse:
+ * 
+ *     ResponseMessage:
  *       type: object
  *       properties:
  *         message:
@@ -75,9 +68,6 @@ const {
  *     LoginRequest:
  *       type: object
  *       properties:
- *         username:
- *           type: string
- *           description: Username of the user
  *         email:
  *           type: string
  *           format: email
@@ -100,13 +90,18 @@ const {
  *         accessToken:
  *           type: string
  *           description: Access token for authentication
- *
- *     LogoutResponse:
+ * 
+ *     ErrorResponse:
  *       type: object
  *       properties:
+ *         success:
+ *           type: boolean
+ *           description: Indicates if there was an error.
+ *           default: false
  *         message:
  *           type: string
- *           description: Success message
+ *           description: The error message
+ *
  */
 
 /**
@@ -127,7 +122,19 @@ const {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RegisterUserResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 authRouter.post('/register/user', httpRegisterUser);
 
@@ -136,7 +143,7 @@ authRouter.post('/register/user', httpRegisterUser);
  * /api/v1/auth/register/admin:
  *   post:
  *     tags: [Authentication]
- *     summary: Register a new admin
+ *     summary: Register a new user
  *     requestBody:
  *       required: true
  *       content:
@@ -145,20 +152,33 @@ authRouter.post('/register/user', httpRegisterUser);
  *             $ref: '#/components/schemas/RegisterAdminRequest'
  *     responses:
  *       201:
- *         description: Admin registered successfully
+ *         description: User registered successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RegisterAdminResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 authRouter.post('/register/admin', httpRegisterAdmin);
+
 
 /**
  * @swagger
  * /api/v1/auth/login:
  *   post:
  *     tags: [Authentication]
- *     summary: Login a user
+ *     summary: login a user
  *     requestBody:
  *       required: true
  *       content:
@@ -166,14 +186,27 @@ authRouter.post('/register/admin', httpRegisterAdmin);
  *           schema:
  *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
- *       200:
- *         description: User logged in successfully
+ *       201:
+ *         description: User registered successfully
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/LoginResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 authRouter.post('/login', httpLoginUser);
+
 
 /**
  * @swagger
@@ -189,7 +222,19 @@ authRouter.post('/login', httpLoginUser);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/LogoutResponse'
+ *               $ref: '#/components/schemas/ResponseMessage'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 authRouter.get('/logout', authToken, httpLogoutUser);
 

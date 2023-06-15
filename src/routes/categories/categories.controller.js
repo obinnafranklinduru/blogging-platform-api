@@ -1,135 +1,122 @@
 const mongoose = require('mongoose');
 
 const Category = require('../../models/categories.model');
-const handleError = require('../../utils/errors.handler');
+const ErrorResponse  = require('../../utils/error.response')
 
 /**
- * Get all categories.
+ * @desc Get all categories.
+ * @route GET /api/v1/categories
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the categories or an error message.
+ * @param {Function} next - The error passed to the error handler function.
+ * @returns {Object} - The response containing an array of categories or an error message.
  */
-const httpGetCategories = async (req, res) => {
+const httpGetCategories = async (req, res, next) => {
     try {
         const categories = await Category.find({})
             .select('name')
             .sort('-createdAt');
       
         // Handle if no categories are found
-        if (categories.length === 0) return res.status(404)
-            .json({ message: 'No categories found' });
-
-        // Set the response headers and send the categories
-        res.header('Content-Type', 'application/json');
+        if (categories.length === 0) return next(new ErrorResponse('No category found', 404));
+        
         res.status(200).json({ categories });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Get a category by ID.
+ * @desc Get category by ID.
+ * @route GET /api/v1/categories/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the category or an error message.
  */
-async function httpGetCategoryByID(req, res) {
+async function httpGetCategoryByID(req, res, next) {
     try {
         // Validate the ID parameter
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invalid ID' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
         // Find the category by ID
         const category = await Category.findById(req.params.id)
             .select('-_id -__v');
 
         // Handle if category is not found
-        if (!category) return res.status(404)
-            .json({ message: `category with ID ${req.params.id} not found` });
+        if (!category) return next(new ErrorResponse('Category not found', 404));
 
-        // Set the response headers and send the category
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ category });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Create a new category.
+ * @desc Create a new category.
+ * @route POST /api/v1/categories
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the success message or an error message.
  */
-const httpCreateCategory = async (req, res) => {
+const httpCreateCategory = async (req, res, next) => {
     try {
         const { name } = req.body;
 
         // Validate that a category name is provided
-        if (!name) return res.status(400).json({ message: 'Please provide a category name' });
+        if (!name) return next(new ErrorResponse('Please provide a category name', 400));
 
         // Create the category
         const category = await Category.create({ name });
 
-        // Handle if category creation is not implemented
-        if (!category) return res.status(501)
-            .json({ message: 'category creation was not implemented' })
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
-        res.status(201).json({ message: `category created with ID ${category._id}` });
+        res.status(201).json({ message: `Category created with ID ${category._id}` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Update a category by ID.
+ * @desc Update a category by ID.
+ * @route POST /api/v1/categories/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the success message or an error message.
  */
-const httpUpdateCategory = async (req, res) => {
+const httpUpdateCategory = async (req, res, next) => {
     try {
         // Validate the ID parameter
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invalid ID' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
         const { name } = req.body;
 
-        // Validate that a category name is provided
-        if (!name) return res.status(400).json({ message: 'Please provide a category name' });
+         // Validate that a category name is provided
+        if (!name) return next(new ErrorResponse('Please provide a category name', 400));
 
         // Format the name by removing whitespace and converting to lowercase
         const formattedName = name.trim().replace(/\s/g, '-').toLowerCase();
 
         // Check if the name already exists for another use
-        if (formattedName === await Category.findOne({ name: formattedName })) {
-            return res.status(400).json({ message: 'category name already exists, choose a different name' });
-        }
+        if (formattedName === await Category.findOne({ name: formattedName }))
+            return next(new ErrorResponse('Please provide a unique name', 400));
 
         // Check if the category exists
-        const existedCategory = await Category.find({ _id: req.params.id });
+        const existedCategory = await Category.findById(req.params.id);
 
         // Handle if the category is not found
-        if (existedCategory.length === 0) return res.status(404)
-            .json({ message: `category with ID ${req.params.id} not found` });
+        if (!existedCategory)
+            return next(new ErrorResponse('Category not found', 404));
 
         // Update the category by ID
         const category = await Category.findByIdAndUpdate(
@@ -138,58 +125,37 @@ const httpUpdateCategory = async (req, res) => {
             { new: true }
         );
 
-        // Handle if the category is not modified
-        if (!category) return res.status(304)
-            .json({ message: `category with ID ${req.params.id} not modified` });
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ message: `category with ID ${req.params.id} was modified` });
+        res.status(200).json({ message: `Category with ID ${category._id} was modified` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Delete a category by ID.
+ * @desc Delete a category by ID.
+ * @route DELETE /api/v1/categories/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the success message or an error message.
+ * @param {Function} next - The error passed to the error handler function.
+ * @returns {Object} - The response containing a success message or an error message.
  */
 const httpDeleteCategory = async (req, res) => {
     try {
-        // Validate the ID parameter
+        // Validate the provided ID
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invalid ID' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
-        // Check if the category exists
-        const existedCategory = await Category.find({ _id: req.params.id });
+        const category = await Category.findById(req.params.id);
 
-        // Handle if the category is not found
-        if (existedCategory.length === 0) return res.status(404)
-            .json({ message: `category with ID ${req.params.id} not found` });
+        if (!category) return next(new ErrorResponse('Category not found', 404));
 
-        // Delete the category by ID
-        const cateory = await Category.findByIdAndDelete(req.params.id );
+        await Category.deleteOne({ _id: req.params.id });
 
-        // Handle if the category is not deleted
-        if (cateory.deletedCount === 0) return res.status(417)
-            .json({ message: 'Expectation Failed' });
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ message: `category with ID ${req.params.id} was deleted` });
+        res.status(200).json({ message: `Category with ID ${req.params.id} was deleted` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 

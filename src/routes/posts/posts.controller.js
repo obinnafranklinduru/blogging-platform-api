@@ -3,16 +3,19 @@ const mongoose = require('mongoose');
 const Post = require('../../models/posts.model');
 const User = require('../../models/users.model');
 const Cateory = require('../../models/categories.model');
-const handleError = require('../../utils/errors.handler');
+const ErrorResponse  = require('../../utils/error.response')
 
 /**
- * Get all posts.
+ * @desc Get all posts.
+ * @route GET /api/v1/posts
+ * @access Public
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the posts or an error message.
+ * @param {Function} next - The error passed to the error handler function.
+ * @returns {Object} - The response containing an array of posts or an error message.
  */
-const httpGetPosts = async (req, res) => {
+const httpGetPosts = async (req, res, next) => {
     try {
         // Retrieve all posts and select specific fields
         const posts = await Post.find({})
@@ -22,63 +25,56 @@ const httpGetPosts = async (req, res) => {
             .sort('-createdAt');
       
         // Handle if no posts are found
-        if (posts.length === 0) return res.status(404).json({ message: 'No posts found' });
+        if (posts.length === 0) return next(new ErrorResponse('No posts found', 404));
 
-        // Set the response status and send the posts
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ posts });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Get a post by ID.
+ * @desc Get a post by ID.
+ * @route GET /api/v1/posts/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the post or an error message.
  */
-async function httpGetPostByID(req, res) {
+async function httpGetPostByID(req, res, next) {
     try {
         // Validate the provided post ID
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invalid ID' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
         // Find the post by ID and populate related fields
         const post = await Post.findById(req.params.id)
-            .select('title content author category image likes comments -_id')
+            .select('title content author category likes comments -_id')
             .populate({ path: 'author', select: 'username -_id' })
             .populate({ path: 'likes', select: 'username -_id' })
 
         // Handle if no post is found
-        if (!post) return res.status(404).json({ message: 'No post found' });
+        if (!post) return next(new ErrorResponse('No post found', 404));
 
-        // Set the response headers and send the post
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ post });
     } catch (error) {
-        console.error(error)
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Get posts by category.
+ * @desc Get posts by category.
+ * @route GET /api/v1/posts/get/categories?category={{category}}
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @returns {Object} - The response containing the filtered posts or an error message.
+ * @param {Function} next - The error passed to the error handler function.
+ * @returns {Object} - The response containing array of the filtered posts or an error message.
  */
-async function httpGetPostByCategory(req, res) {
+async function httpGetPostByCategory(req, res, next) {
     try {
         // Retrieve the category from the query parameters
         const { category } = req.query;
@@ -98,65 +94,52 @@ async function httpGetPostByCategory(req, res) {
             .sort('-createdAt');
       
         // Handle if no posts are found for the specified category
-        if (filteredPosts.length === 0) return res.status(404)
-            .json({ message: `post with category ${category} not found` });
+        if (filteredPosts.length === 0)
+            return next(new ErrorResponse(`Post with category ${category} not found`, 404));
 
-        // Set the response headers and send the filtered posts
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ posts });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Get the count of posts.
+ * @desc Get the count of posts.
+ * @route GET /api/v1/posts/get/count
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function. 
  * @returns {Object} - The response containing the count of posts or an error message.
  */
-async function httpGetPostsCount(req, res) {
+async function httpGetPostsCount(req, res, next) {
     try {
         // Count the number of posts
         const postsCount = await Post.countDocuments();
 
         // Handle if no posts are found
-        if (postsCount === 0) return res.status(404).json({ message: 'No posts found' });
+        if (postsCount === 0) return next(new ErrorResponse('No post found', 404));
 
-        // Set the response headers and send the posts count
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ postsCount });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Create a new post.
+ * @desc Create a new post.
+ * @route GET /api/v1/posts/get/count
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing a success message or an error message.
  */
 const httpCreatePost = async (req, res) => {
     try {
         const { title, content, category } = req.body;
-        const { _id } = req.user;
-
-        // Find the user by ID
-        const user = await User.findById(_id);
-
-        // Handle if user is not found
-        if (!user) return res.status(404).json({ message: 'user not found' });
 
         let formattedCategory;
         if (category) {
@@ -165,79 +148,49 @@ const httpCreatePost = async (req, res) => {
         }
 
         // Check if the formatted category is specified but not found
-        if (formattedCategory && !(await Cateory.findOne({ name: formattedCategory }))) {
-            return res.status(404).json({ message: 'Category not found' });
-        }
-
-        let postImagePath = '';
-
-        // Check if a file was uploaded and generate the postImagePath
-        if (req.file) {
-            const { filename } = req.file;
-            postImagePath = `${req.protocol}://${req.get('host')}/public/uploads/${filename}`;
-        }
+        if (formattedCategory && !(await Cateory.findOne({ name: formattedCategory })))
+            return next(new ErrorResponse('Category not found', 404));
 
         // Create the new post
-        const createdPost = await Post.create({
+        const post = await Post.create({
             title,
             content,
-            image: postImagePath,
             category: formattedCategory,
-            author: _id,
+            author: req.user.id,
         });
 
-        // Handle if user is not modified
-        if (!createdPost) return res.status(501).json({ message: 'post not implemented' });
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
-        res.status(201).json({ message: `post created with ${createdPost._id}` });
+        res.status(201).json({ message: `Post created with ${post._id}` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Update a post.
+ * @desc Update a post.
+ * @route GET /api/v1/posts/get/count
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response indicating whether the post was updated or an error message.
  */
-const httpUpdatePost = async (req, res) => {
+const httpUpdatePost = async (req, res, next) => {
     try {
         // Check if the post ID is valid
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invaild ID' });
-        
-        const { _id } = req.user;
-
-        // Find the current user
-        const user = await User.findById(_id);
-        if (!user) return res.status(404).json({ message: 'user not found' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
         // Find the post by ID and check if the current user is the author
         const post = await Post.findOne({ _id: req.params.id, author: _id });
-        if (!post) return res.status(404).json({ message: 'You can\'t update this post' });
 
-        let postImagePath = '';
-
-        // Check if a file was uploaded and generate the postImagePath
-        if (req.file) {
-            const { filename } = req.file;
-            postImagePath = `${req.protocol}://${req.get('host')}/public/uploads/${filename}`;
-        }
+        if (!post) return next(new ErrorResponse('You can\'t update this post', 404));
 
         const { title, content, category } = req.body;
 
         // Validate the title length
-        if (title && title.length > 100) {
-            return res.status(400).json({message: 'title field must not exceed 100 characters'})
-        }
+        if (title && title.length > 100)
+            return next(new ErrorResponse('Title field must not exceed 100 characters', 400));
 
         let formattedCategory
         if (category) {
@@ -245,10 +198,9 @@ const httpUpdatePost = async (req, res) => {
         }
 
         // Check if the formatted category exists
-        if (formattedCategory && !(await Cateory.findOne({ name: formattedCategory }))) {
-            return res.status(404).json({ message: 'category name not found' });
-        }
-    
+        if (formattedCategory && !(await Cateory.findOne({ name: formattedCategory })))
+            return next(new ErrorResponse('Category name not found', 400));
+        
         // Update the post
         const updatedPost = await Post.findByIdAndUpdate(
             req.params.id,
@@ -256,133 +208,102 @@ const httpUpdatePost = async (req, res) => {
                 title,
                 content,
                 category: formattedCategory,
-                image: postImagePath
             },
             { new: true }
         );
 
-        if (!updatedPost) return res.status(304).json({ message: 'Post not modified' })
-
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ message: `post with ID ${req.params.id} was updated` });
+        res.status(200).json({ message: `Post with ID ${updatedPost._id} was updated` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 /**
- * Toggle like on a post.
+ * @desc Toggle like on a post.
+ * @route PUT /api/v1/posts/toggle/likes/{id}:
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the updated post or an error message.
  */
-async function httpToggleLike(req, res) {
+async function httpToggleLike(req, res, next) {
     try {
         // Check if the post ID is valid
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ error: 'Invalid ID' });
-        
-        const { _id } = req.user;
-        const user = await User.findById(_id);
-        if (!user) return res.status(404).json({ message: 'user not found' });
+            return next(new ErrorResponse('Invalid ID', 400));
 
         const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (!post) return next(new ErrorResponse('Post not found', 404));
 
-        const likedIndex = post.likes.indexOf(_id);
-        likedIndex === -1 ? post.likes.push(_id) : post.likes.splice(likedIndex, 1);
+        const likedIndex = post.likes.indexOf(req.user.id);
+        likedIndex === -1 ? post.likes.push(req.user.id) : post.likes.splice(likedIndex, 1);
     
         await post.save();
 
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ post });
-    } catch (error) {
-        const errors = handleError(error);
+        const totalLikes = post.likes.length;
 
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        res.status(200).json({ totalLikes });
+    } catch (error) {
+        next(error);
     }
 }
 
 /**
- * Get the total number of likes on a post.
+ * @desc Get the total number of likes on a post.
+ * @route PUT /api/v1/posts/get/likes/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing the total likes count or an error message.
  */
-async function httpGetTotalLikes(req, res) {
+async function httpGetTotalLikes(req, res, next) {
     try {
         // Check if the post ID is valid
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ error: 'Invalid ID' });
+            return next(new ErrorResponse('Invalid ID', 400));
         
         const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ message: 'No posts found' });
+        if (!post) return next(new ErrorResponse('No posts found', 404));
 
-        const likesCount = post.likes;
+        const likesCount = post.likes.length;
 
-        const totalLikes = likesCount.length;
-
-        // Set the response headers and send the total likes count
-        res.header('Content-Type', 'application/json');
-        res.status(200).json({ totalLikes });
+        res.status(200).json({ likesCount });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 
 
 /**
- * Delete a post.
+ * @desc Delete a post.
+ * @route PUT /api/v1/posts/:id
+ * @access Private
  *
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
+ * @param {Function} next - The error passed to the error handler function.
  * @returns {Object} - The response containing a success message or an error message.
  */
 const httpDeletePost = async (req, res) => {
     try {
-        // Retrieve the user ID from the request object
-        const { _id } = req.user;
-
         // Validate the provided post ID
         if (!mongoose.isValidObjectId(req.params.id))
-            return res.status(400).json({ message: 'Invalid ID' });
-        
-        // Find the user and handle if user not found
-        const user = await User.findById(_id);
-        if (!user) return res.status(404).json({ message: 'user not found' });
+            return next(new ErrorResponse('Invalid ID', 400));
 
         // Find the post by ID and author
-        const post = await Post.findOne({ _id: req.params.id, author: _id });
-        if (!post) return res.status(404).json({ message: 'post not found' });
+        const post = await Post.findOne({ _id: req.params.id, author: req.user.id });
+        if (!post) return next(new ErrorResponse('Post not found', 400));
 
         // Delete the post
-        const deletedPost = await Post.findByIdAndDelete(post._id);
+        await Post.deleteOne({ _id: post._id });
 
-        // Handle if the post was not deleted
-        if (deletedPost.deletedCount === 0) return res.status(417)
-            .json({ message: 'Expectation Failed' });
-
-        // Set the response headers and send the success message
-        res.header('Content-Type', 'application/json');
         res.status(200).json({ message: `post with ID ${req.params.id} was deleted` });
     } catch (error) {
-        const errors = handleError(error);
-
-        // Set the response headers and handle validation errors or other errors
-        res.header('Content-Type', 'application/json');
-        res.status(400).json({ errors });
+        next(error);
     }
 }
 

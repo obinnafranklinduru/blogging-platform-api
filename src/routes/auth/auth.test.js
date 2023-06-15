@@ -1,24 +1,25 @@
 const request = require('supertest');
 
-const app = require('../../../app');
+const app = require('../../app');
 const User = require('../../models/users.model');
 const TokenBlacklist = require('../../models/tokenblacklist.model');
-const { mongooseConnect, mongooseDisconnect } = require('../../utils/mongoose');
+const { mongooseConnect, mongooseDisconnect } = require('../../config/mongoose');
 
 describe('Authentication Endpoints', () => {
-    beforeAll(async () => await mongooseConnect());
+    beforeAll(async () => {
+        await mongooseConnect();
+    });
 
     afterAll(async () => {
         await TokenBlacklist.deleteMany({});
         await User.deleteMany({});
-
-        await mongooseDisconnect()
+        await mongooseDisconnect();
     });
 
-    describe('POST /api/v1/auth/register/user', () => {
+    describe('POST /v1/auth/register', () => {
         it('should register a new user', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/user')
+                .post('/v1/auth/register')
                 .send({
                     username: 'testuser',
                     email: 'testuser@example.com',
@@ -28,7 +29,7 @@ describe('Authentication Endpoints', () => {
             expect(response.status).toBe(201);
             expect(response.body.message).toBeDefined();
         });
-   
+
         it('should hash password before saving', async () => {
             const user = await User.findOne({ email: 'testuser@example.com' });
 
@@ -37,29 +38,29 @@ describe('Authentication Endpoints', () => {
 
         it('should throw validation errors if required fields are missing', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/user')
+                .post('/v1/auth/register')
                 .send({});
-            
+
             expect(response.status).toBe(400);
-            expect(response.body.message).toBe('Please provide username, email and password');
+            expect(response.body.success).toBe(false);
         });
 
         it('should throw validation errors if email is invalid', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/user')
+                .post('/v1/auth/register')
                 .send({
                     username: 'testuser',
                     email: 'invalidemail',
-                    password: 'password'
+                    password: 'password',
                 });
-            
+
             expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
+            expect(response.body.success).toBe(false);
         });
 
         it('should throw validation errors if email is not unique', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/user')
+                .post('/v1/auth/register')
                 .send({
                     username: 'newuser',
                     email: 'testuser@example.com',
@@ -67,12 +68,12 @@ describe('Authentication Endpoints', () => {
                 });
 
             expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
+            expect(response.body.success).toBe(false);
         });
 
         it('should throw validation errors if username is not unique', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/user')
+                .post('/v1/auth/register')
                 .send({
                     username: 'testuser',
                     email: 'newuser@example.com',
@@ -80,12 +81,12 @@ describe('Authentication Endpoints', () => {
                 });
 
             expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
+            expect(response.body.success).toBe(false);
         });
 
         it('should throw validation errors if password is short', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/user')
+                .post('/v1/auth/register')
                 .send({
                     username: 'newuser',
                     email: 'newuser@example.com',
@@ -93,180 +94,69 @@ describe('Authentication Endpoints', () => {
                 });
 
             expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
-        });
-
-        it('should create user with default Admin Status if not provided', async () => {
-            const user = await User.findOne({ email: 'testuser@example.com' });
-
-            expect(user.isAdmin).toBe(false);
+            expect(response.body.success).toBe(false);
         });
     });
 
-    describe('POST /api/v1/auth/register/admin', () => {
-        it('should register a new admin', async () => {
+    describe('POST /v1/auth/login', () => {
+        it('should login user with correct credentials and return an accesstoken', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({
-                    username: 'testadmin',
-                    email: 'testadmin@example.com',
-                    password: 'password',
-                    isAdmin: true
-                });
+                .post('/v1/auth/login')
+                .send({ email: 'testuser@example.com', password: 'password' });
 
-            expect(response.status).toBe(201);
-            expect(response.body.message).toBeDefined();
-        });
-   
-        it('should hash password before saving', async () => {
-            const user = await User.findOne({ email: 'testuser@example.com' });
-
-            expect(user.password).not.toBe('password');
-        });
-
-        it('should throw validation errors if required fields are missing', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({});
-            
-            expect(response.status).toBe(400);
-            expect(response.body.message).toBe('Please provide username, email, admin status and password');
-        });
-
-        it('should throw validation errors if admin status is false ', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({
-                    username: 'testadmin',
-                    email: 'testadmin@example.com',
-                    password: 'password',
-                    isAdmin: false
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.body.message).toBe('Please set admin status to true');
-        });
-
-        it('should throw validation errors if email is invalid', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({
-                    username: 'testadmin',
-                    email: 'invalidemail',
-                    password: 'password',
-                    isAdmin: true
-                });
-            
-            expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
-        });
-
-        it('should throw validation errors if email is not unique', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({
-                    username: 'newadmin',
-                    email: 'testadmin@example.com',
-                    password: 'password',
-                    isAdmin: true
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
-        });
-
-        it('should throw validation errors if username is not unique', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({
-                    username: 'testadmin',
-                    email: 'newadmin@example.com',
-                    password: 'password',
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
-        });
-
-        it('should throw validation errors if password is short', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/register/admin')
-                .send({
-                    username: 'newadmin',
-                    email: 'newadmin@example.com',
-                    password: 'short',
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.error).toBeDefined();
-        });
-
-        it('should create user with Admin Status set to true', async () => {
-            const user = await User.findOne({ email: 'testadmin@example.com' });
-
-            expect(user.isAdmin).toBe(true);
-        });
-    })
-
-    describe('POST /api/v1/auth/login', () => {
-        it('should return an auth token for a valid login with email', async () => {
-            const response = await request(app)
-                .post('/api/v1/auth/login')
-                .send({ email: 'testadmin@example.com', password: 'password' });
-            
             expect(response.status).toEqual(200);
             expect(response.body.accessToken).toBeDefined();
         });
 
-        it('should return an auth token for a valid login with username', async () => {
+        it('should return unauthorized if email is incorrect', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/login')
-                .send({ username: 'testadmin', password: 'password' });
-            
-            expect(response.status).toEqual(200);
-            expect(response.body.accessToken).toBeDefined();
+                .post('/v1/auth/login')
+                .send({
+                    email: 'wrongemail@gmail.com',
+                    password: 'password',
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.success).toBe(false);
         });
 
-        it('should return an error for an invalid login with password', async () => {
-            const res = await request(app)
-                .post('/api/v1/auth/login')
-                .send({ email: 'testuser@example.com', password: 'wrongpassword' });
-            
-            expect(res.status).toEqual(401);
-            expect(res.body.message).toEqual('Incorrect credentials');
+        it('should return unauthorized if username is incorrect', async () => {
+            const response = await request(app)
+                .post('/v1/auth/login')
+                .send({
+                    username: 'wrongusername',
+                    password: 'password',
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.success).toBe(false);
         });
 
-        it('should return an error for an invalid login with email', async () => {
-            const res = await request(app)
-                .post('/api/v1/auth/login')
-                .send({ email: 'wrong@example.com', password: 'password' });
-            
-            expect(res.status).toEqual(401);
-            expect(res.body.message).toEqual('Incorrect credentials');
-        });
+        it('should return unauthorized if password is incorrect', async () => {
+            const response = await request(app)
+                .post('/v1/auth/login')
+                .send({
+                    username: 'testuser',
+                    password: 'wrongpassword',
+                });
 
-        it('should return an error for an invalid login with username', async () => {
-            const res = await request(app)
-                .post('/api/v1/auth/login')
-                .send({ username: 'wrongusername', password: 'password' });
-            
-            expect(res.status).toEqual(401);
-            expect(res.body.message).toEqual('Incorrect credentials');
+            expect(response.status).toBe(401);
+            expect(response.body.success).toBe(false);
         });
     });
-    
-    describe('GET /api/v1/auth/logout', () => {
+
+    describe('GET /v1/auth/logout', () => {
         it('should blacklist the auth token for the current user', async () => {
             const response = await request(app)
-                .post('/api/v1/auth/login')
+                .post('/v1/auth/login')
                 .send({ email: 'testuser@example.com', password: 'password' });
-            
+
             const authToken = response.body.accessToken;
 
             const res = await request(app)
-                .get('/api/v1/auth/logout')
-                .set('Authorization', `Bearer ${authToken}`)
-            
+                .get('/v1/auth/logout')
+                .set('Authorization', `Bearer ${authToken}`);
+
             expect(res.status).toEqual(200);
             expect(res.body.message).toEqual('Logout successful');
 
@@ -275,9 +165,9 @@ describe('Authentication Endpoints', () => {
         });
 
         it('should return an error if no auth token is provided', async () => {
-            const response = await request(app).get('/api/v1/auth/logout');
-            expect(response.status).toEqual(401);
-            expect(response.body.message).toBe('Unauthorized');
+            const response = await request(app).get('/v1/auth/logout');
+            expect(response.status).toBe(401);
+            expect(response.body.success).toBe(false);
         });
     });
 });
